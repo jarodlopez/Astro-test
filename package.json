@@ -1,17 +1,25 @@
 {
-  "name": "cactusworld-landing",
+  "name": "homemart-web",
   "type": "module",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro build", 
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/tailwind": "^5.1.2",
-    "astro": "^4.15.11",
-    "tailwindcss": "^3.4.13"
+    "astro": "^4.0.0",
+    "@astrojs/react": "^3.0.0",
+    "@astrojs/tailwind": "^5.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "firebase": "^10.7.1",
+    "nanostores": "^0.9.0",
+    "@nanostores/react": "^0.7.1",
+    "tailwindcss": "^3.3.0",
+    "lucide-react": "^0.300.0"
   }
 }
+
