@@ -1,73 +1,114 @@
 import React, { useState } from 'react';
 import { addToCart } from '../store/cartStore';
+import { ShoppingCart } from 'lucide-react'; // Asegúrate de tener lucide-react instalado
 
 export default function ProductCard({ product }) {
   const [showVariants, setShowVariants] = useState(false);
 
-  // Formatear precio
-  const price = product.variants?.length 
-    ? Math.min(...product.variants.map(v => v.price)) // Precio 'desde'
-    : product.price;
+  // Lógica de precio (detectar variante más barata)
+  const basePrice = product.variants?.length 
+    ? Math.min(...product.variants.map(v => Number(v.price))) 
+    : Number(product.price);
 
   const hasStock = product.variants?.length 
-    ? product.variants.some(v => v.stock > 0)
-    : product.stock > 0;
+    ? product.variants.some(v => Number(v.stock) > 0)
+    : Number(product.stock) > 0;
 
   if (!product.active) return null;
 
   return (
-    <div className="group bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl transition border border-stone-100 relative">
-      <div className="aspect-square rounded-xl overflow-hidden mb-4 bg-gray-100">
+    <div className="bg-white border border-gray-200 rounded-sm hover:shadow-lg transition-shadow duration-300 flex flex-col h-full relative group">
+      {/* Badge de Stock bajo o Oferta (Simulado) */}
+      {!hasStock && (
+        <span className="absolute top-2 left-2 bg-gray-500 text-white text-xs font-bold px-2 py-1 z-10">
+          AGOTADO
+        </span>
+      )}
+
+      {/* Imagen */}
+      <div className="aspect-square bg-gray-50 p-4 flex items-center justify-center overflow-hidden border-b border-gray-100 relative">
         <img 
-          src={product.image || "https://via.placeholder.com/300"} 
+          src={product.image || "https://via.placeholder.com/300?text=Sin+Imagen"} 
           alt={product.name} 
-          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+          className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
         />
+        
+        {/* Botón rápido (aparece en hover desktop) */}
+        <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
+           {!product.variants?.length && hasStock && (
+             <button 
+                onClick={() => addToCart(product)}
+                className="w-full bg-blue-600 text-white text-sm font-bold py-2 shadow-md hover:bg-blue-700"
+             >
+               Añadir Rápido
+             </button>
+           )}
+        </div>
       </div>
       
-      <h3 className="font-bold text-stone-800 text-lg truncate">{product.name}</h3>
-      <p className="text-emerald-600 font-bold mb-4">
-        {product.variants?.length ? 'Desde ' : ''}${Number(price).toFixed(2)}
-      </p>
-
-      {/* Selector de Variantes (si tiene) */}
-      {showVariants && (
-        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-10 p-4 flex flex-col justify-center rounded-2xl animate-in fade-in">
-          <h4 className="font-bold text-center mb-2 text-stone-700">Elige una opción:</h4>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {product.variants.map((v, i) => (
-              <button 
-                key={i}
-                disabled={v.stock <= 0}
-                onClick={() => { addToCart(product, v); setShowVariants(false); }}
-                className="w-full flex justify-between p-2 hover:bg-emerald-50 rounded-lg text-sm border disabled:opacity-50"
-              >
-                <span>{v.name}</span>
-                <span className="font-bold">${v.price}</span>
-              </button>
-            ))}
-          </div>
-          <button onClick={() => setShowVariants(false)} className="mt-2 text-xs text-red-500 underline text-center">Cancelar</button>
+      {/* Info */}
+      <div className="p-4 flex-1 flex flex-col">
+        {product.category && (
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{product.category}</p>
+        )}
+        <h3 className="font-semibold text-slate-800 text-sm md:text-base leading-tight mb-2 flex-1 hover:text-blue-700 cursor-pointer">
+          {product.name}
+        </h3>
+        
+        <div className="mt-2">
+          <p className="text-2xl font-bold text-slate-900">
+            ${basePrice.toLocaleString('en-US', {minimumFractionDigits: 2})}
+            <span className="text-xs font-normal text-gray-500 ml-1">
+               {product.variants?.length ? 'desde' : ''}
+            </span>
+          </p>
+          {/* Precio tachado simulado (opcional si tuvieras campo compare_price) */}
         </div>
-      )}
 
-      {/* Botón de Acción */}
-      {product.variants?.length ? (
-        <button 
-          onClick={() => setShowVariants(true)}
-          className="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold hover:bg-emerald-700 transition"
-        >
-          Ver Opciones
-        </button>
-      ) : (
-        <button 
-          onClick={() => addToCart(product)}
-          disabled={!hasStock}
-          className="w-full bg-stone-900 text-white py-2 rounded-lg font-bold hover:bg-stone-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {hasStock ? 'Agregar al Carrito' : 'Agotado'}
-        </button>
-      )}
+        {/* Botones Móvil / Variantes */}
+        <div className="mt-4 pt-3 border-t border-gray-100">
+          {product.variants?.length ? (
+            <div className="relative">
+                <button 
+                  onClick={() => setShowVariants(!showVariants)}
+                  className="w-full bg-slate-100 text-slate-700 text-sm font-bold py-2 rounded-sm hover:bg-slate-200 transition flex justify-center items-center gap-2"
+                >
+                  Seleccionar Opción
+                </button>
+                
+                {/* Desplegable de Variantes */}
+                {showVariants && (
+                  <div className="absolute bottom-full left-0 w-full bg-white shadow-xl border border-gray-200 p-2 mb-1 z-20 rounded-sm">
+                     <p className="text-xs font-bold text-gray-500 mb-2">Disponibles:</p>
+                     <div className="max-h-40 overflow-y-auto space-y-1">
+                        {product.variants.map((v, i) => (
+                           <button 
+                             key={i}
+                             disabled={v.stock <= 0}
+                             onClick={() => { addToCart(product, v); setShowVariants(false); }}
+                             className="w-full text-left text-sm p-2 hover:bg-blue-50 flex justify-between disabled:opacity-50 disabled:bg-gray-50"
+                           >
+                              <span className="truncate">{v.name}</span>
+                              <span className="font-bold text-blue-700">${v.price}</span>
+                           </button>
+                        ))}
+                     </div>
+                  </div>
+                )}
+            </div>
+          ) : (
+            <button 
+              onClick={() => addToCart(product)}
+              disabled={!hasStock}
+              className="w-full bg-yellow-500 text-blue-900 text-sm font-bold py-2 rounded-sm hover:bg-yellow-400 transition flex justify-center items-center gap-2 disabled:bg-gray-200 disabled:text-gray-400"
+            >
+              <ShoppingCart size={16} />
+              {hasStock ? 'Agregar' : 'Sin Stock'}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+ 
