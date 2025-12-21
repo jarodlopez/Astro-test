@@ -1,42 +1,97 @@
 ---
+// IMPORTANTE: Si tienes un archivo CSS global, descomenta la siguiente línea.
+// Si no lo tienes, Astro y Tailwind suelen inyectarlo solos, pero asegúrate de que Tailwind esté funcionando.
+// import '../styles/global.css';
+
 interface Props {
   title: string;
 }
 
 const { title } = Astro.props;
 ---
+
 <!doctype html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content="CactusWorld: Tu tienda de cactus premium" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-gray-100 font-sans">
-    <header class="bg-primary text-white py-4">
-      <nav class="container mx-auto flex justify-between items-center">
-        <h1 class="text-2xl font-bold">CactusWorld</h1>
-        <ul class="flex space-x-4">
-          <li><a href="#home" class="hover:underline">Inicio</a></li>
-          <li><a href="#products" class="hover:underline">Productos</a></li>
-          <li><a href="#about" class="hover:underline">Sobre Nosotros</a></li>
-          <li><a href="#contact" class="hover:underline">Contacto</a></li>
+  
+  <body class="bg-stone-50 font-sans text-stone-800 antialiased flex flex-col min-h-screen">
+    
+    <header class="fixed w-full top-0 z-50 transition-all duration-300 bg-white/80 backdrop-blur-md border-b border-stone-100">
+      <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <a href="#home" class="flex items-center gap-2 group">
+          <span class="text-2xl">🌵</span>
+          <span class="text-xl font-bold tracking-tight text-stone-900 group-hover:text-emerald-600 transition">
+            CactusWorld
+          </span>
+        </a>
+
+        <ul class="hidden md:flex space-x-8 text-sm font-medium text-stone-600">
+          <li><a href="#home" class="hover:text-emerald-600 transition">Inicio</a></li>
+          <li><a href="#products" class="hover:text-emerald-600 transition">Colección</a></li>
+          <li><a href="#about" class="hover:text-emerald-600 transition">Nosotros</a></li>
         </ul>
+
+        <a href="#contact" class="hidden md:inline-block bg-stone-900 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-emerald-600 transition transform hover:scale-105">
+          Contacto
+        </a>
+
+        <button class="md:hidden text-stone-600 text-2xl">
+          ☰
+        </button>
       </nav>
     </header>
-    <main>
+
+    <main class="flex-grow pt-16">
       <slot />
     </main>
-    <footer class="bg-gray-800 text-white py-4 mt-8">
-      <div class="container mx-auto text-center">
-        <p>&copy; 2025 CactusWorld. Todos los derechos reservados.</p>
-        <ul class="flex justify-center space-x-4 mt-2">
-          <li><a href="https://twitter.com" class="hover:underline">Twitter</a></li>
-          <li><a href="https://instagram.com" class="hover:underline">Instagram</a></li>
-        </ul>
+
+    <footer class="bg-stone-900 text-stone-400 py-12 border-t border-stone-800">
+      <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div class="col-span-1 md:col-span-2">
+          <h3 class="text-white text-lg font-bold mb-4 flex items-center gap-2">
+            🌵 CactusWorld
+          </h3>
+          <p class="text-sm leading-relaxed max-w-xs">
+            Cultivamos naturaleza para espacios modernos. Calidad premium, sostenibilidad y pasión por lo verde en cada envío.
+          </p>
+        </div>
+        
+        <div>
+          <h4 class="text-white font-semibold mb-4">Explorar</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#products" class="hover:text-emerald-400 transition">Catálogo</a></li>
+            <li><a href="#about" class="hover:text-emerald-400 transition">Nuestra Historia</a></li>
+            <li><a href="#" class="hover:text-emerald-400 transition">Cuidados</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-white font-semibold mb-4">Legal</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#" class="hover:text-emerald-400 transition">Privacidad</a></li>
+            <li><a href="#" class="hover:text-emerald-400 transition">Términos</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="border-t border-stone-800 pt-8 mt-8 text-center text-xs">
+        <p>&copy; 2025 CactusWorld. Hecho con Astro y Tailwind.</p>
       </div>
     </footer>
+
+    <style>
+      /* Forzar la fuente si se cargó */
+      body {
+        font-family: 'Outfit', sans-serif;
+      }
+    </style>
   </body>
 </html>
+
