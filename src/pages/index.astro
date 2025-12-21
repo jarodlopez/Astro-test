@@ -1,112 +1,111 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import ProductCard from '../components/ProductCard.jsx';
 import CartSidebar from '../components/CartSidebar.jsx';
-import { db } from '../lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-
-// ID de tu POS
-const APP_ID = 'pos-pro-mobile-v2';
-let products = [];
-let errorMsg = null;
-
-try {
-  // Ajustamos la query para traer solo productos activos
-  // NOTA: Si falla en build por permisos, asegúrate que las reglas de Firestore sean públicas para lectura
-  const q = query(
-      collection(db, 'artifacts', APP_ID, 'public', 'data', 'products'), 
-      where("active", "==", true)
-  );
-  const snapshot = await getDocs(q);
-  products = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-} catch (e) {
-  console.error("Error cargando productos:", e);
-  errorMsg = "No se pudo conectar con el catálogo. Verifique su conexión.";
-}
+import ProductGrid from '../components/ProductGrid.jsx';
 ---
 
 <Layout title="HomeMart | Tu tienda en línea">
+
+  <!-- SIDEBAR CARRITO -->
   <CartSidebar client:load />
 
+  <!-- HERO -->
   <section class="bg-slate-900 text-white">
     <div class="container mx-auto px-4 py-12 md:py-20 flex flex-col md:flex-row items-center">
       <div class="md:w-1/2 space-y-6">
-         <span class="bg-yellow-500 text-blue-900 font-bold px-3 py-1 text-xs rounded uppercase tracking-wider">
-            Ofertas de Temporada
-         </span>
-         <h1 class="text-4xl md:text-6xl font-extrabold leading-tight">
-            Tecnología para <br/><span class="text-blue-400">tu vida diaria</span>
-         </h1>
-         <p class="text-slate-300 text-lg max-w-md">
-            Equipa tu hogar con lo último en electrónica, muebles y accesorios con envío rápido.
-         </p>
-         <div class="flex gap-4">
-            <a href="#catalogo" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-sm font-bold transition">
-               Ver Catálogo
-            </a>
-         </div>
+        <span class="bg-yellow-500 text-blue-900 font-bold px-3 py-1 text-xs rounded uppercase tracking-wider">
+          Ofertas de Temporada
+        </span>
+
+        <h1 class="text-4xl md:text-6xl font-extrabold leading-tight">
+          Tecnología para <br />
+          <span class="text-blue-400">tu vida diaria</span>
+        </h1>
+
+        <p class="text-slate-300 text-lg max-w-md">
+          Equipa tu hogar con lo último en electrónica, muebles y accesorios con envío rápido.
+        </p>
+
+        <div class="flex gap-4">
+          <a
+            href="#catalogo"
+            class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-sm font-bold transition"
+          >
+            Ver Catálogo
+          </a>
+        </div>
       </div>
+
       <div class="md:w-1/2 mt-10 md:mt-0 flex justify-center">
-         <img 
-            src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
-            alt="Electrónica" 
-            class="rounded shadow-2xl border-4 border-slate-800 rotate-2 hover:rotate-0 transition duration-500"
-         />
+        <img
+          src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+          alt="Electrónica"
+          class="rounded shadow-2xl border-4 border-slate-800 rotate-2 hover:rotate-0 transition duration-500"
+        />
       </div>
     </div>
   </section>
 
+  <!-- CATALOGO -->
   <section id="catalogo" class="bg-gray-50 py-16">
     <div class="container mx-auto px-4">
       <div class="flex justify-between items-end mb-8 border-b border-gray-200 pb-4">
         <div>
-          <h2 class="text-2xl font-bold text-slate-900">Productos Destacados</h2>
-          <p class="text-slate-500 text-sm">Explora nuestra selección completa</p>
+          <h2 class="text-2xl font-bold text-slate-900">
+            Productos Destacados
+          </h2>
+          <p class="text-slate-500 text-sm">
+            Explora nuestra selección completa
+          </p>
         </div>
+
         <div class="hidden md:flex gap-4 text-sm font-medium text-slate-600">
-           <button class="text-blue-700 border-b-2 border-blue-700 pb-4 -mb-4">Todos</button>
-           <button class="hover:text-blue-700 transition">Hogar</button>
-           <button class="hover:text-blue-700 transition">Tecnología</button>
+          <button class="text-blue-700 border-b-2 border-blue-700 pb-4 -mb-4">
+            Todos
+          </button>
+          <button class="hover:text-blue-700 transition">Hogar</button>
+          <button class="hover:text-blue-700 transition">Tecnología</button>
         </div>
       </div>
 
-      {errorMsg ? (
-        <div class="text-center py-20 bg-white rounded shadow">
-           <p class="text-red-500 font-bold mb-2">⚠️ {errorMsg}</p>
-           <p class="text-sm text-gray-500">Intenta recargar la página.</p>
-        </div>
-      ) : products.length === 0 ? (
-        <div class="text-center py-20">
-           <p class="text-xl text-slate-400">Cargando inventario...</p>
-        </div>
-      ) : (
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {products.map(p => (
-            <ProductCard client:visible product={p} />
-          ))}
-        </div>
-      )}
+      <!-- 🔥 GRID CLIENTE (FIRESTORE VIVE AQUÍ) -->
+      <ProductGrid client:load />
     </div>
   </section>
 
+  <!-- BENEFICIOS -->
   <section class="bg-white py-12 border-t border-gray-200">
-     <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-        <div class="p-4">
-           <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🚛</div>
-           <h3 class="font-bold text-slate-900">Envío Rápido</h3>
-           <p class="text-sm text-slate-500">Recibe tus productos en 24-48 horas.</p>
+    <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+      <div class="p-4">
+        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+          🚛
         </div>
-        <div class="p-4">
-           <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">💳</div>
-           <h3 class="font-bold text-slate-900">Pago Seguro</h3>
-           <p class="text-sm text-slate-500">Aceptamos todas las tarjetas y efectivo.</p>
-        </div>
-        <div class="p-4">
-           <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">🛡️</div>
-           <h3 class="font-bold text-slate-900">Garantía Total</h3>
-           <p class="text-sm text-slate-500">30 días para cambios o devoluciones.</p>
-        </div>
-     </div>
-  </section>
-</Layout>
+        <h3 class="font-bold text-slate-900">Envío Rápido</h3>
+        <p class="text-sm text-slate-500">
+          Recibe tus productos en 24–48 horas.
+        </p>
+      </div>
 
+      <div class="p-4">
+        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+          💳
+        </div>
+        <h3 class="font-bold text-slate-900">Pago Seguro</h3>
+        <p class="text-sm text-slate-500">
+          Aceptamos tarjetas y efectivo.
+        </p>
+      </div>
+
+      <div class="p-4">
+        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+          🛡️
+        </div>
+        <h3 class="font-bold text-slate-900">Garantía Total</h3>
+        <p class="text-sm text-slate-500">
+          30 días para cambios o devoluciones.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</Layout>
