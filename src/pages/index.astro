@@ -1,0 +1,58 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="CactusWorld - Tienda de Cactus">
+  <!-- Hero Section -->
+  <section id="home" class="bg-cover bg-center h-96 flex items-center justify-center" style="background-image: url('/hero-cactus.jpg');">
+    <div class="text-center text-white bg-black bg-opacity-50 p-8 rounded">
+      <h2 class="text-4xl font-bold mb-4">Bienvenido a CactusWorld</h2>
+      <p class="text-xl mb-6">Cactus premium para tu hogar o oficina. ¡Resistentes y hermosos!</p>
+      <a href="#products" class="bg-secondary text-white py-2 px-4 rounded hover:bg-red-700">Comprar Ahora</a>
+    </div>
+  </section>
+
+  <!-- Products Section -->
+  <section id="products" class="container mx-auto py-12">
+    <h2 class="text-3xl font-bold text-center mb-8">Nuestros Cactus Destacados</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="bg-white p-4 rounded shadow">
+        <img src="/cactus1.jpg" alt="Cactus Espina" class="w-full h-48 object-cover mb-4" />
+        <h3 class="text-xl font-semibold">Cactus Espina</h3>
+        <p class="text-gray-600">$15.99</p>
+        <a href="/buy/cactus1" class="bg-secondary text-white py-1 px-3 rounded mt-2 block text-center">Añadir al Carrito</a>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <img src="/cactus2.jpg" alt="Cactus Bola" class="w-full h-48 object-cover mb-4" />
+        <h3 class="text-xl font-semibold">Cactus Bola</h3>
+        <p class="text-gray-600">$12.99</p>
+        <a href="/buy/cactus2" class="bg-secondary text-white py-1 px-3 rounded mt-2 block text-center">Añadir al Carrito</a>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <img src="/cactus3.jpg" alt="Cactus Gigante" class="w-full h-48 object-cover mb-4" />
+        <h3 class="text-xl font-semibold">Cactus Gigante</h3>
+        <p class="text-gray-600">$25.99</p>
+        <a href="/buy/cactus3" class="bg-secondary text-white py-1 px-3 rounded mt-2 block text-center">Añadir al Carrito</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="bg-gray-200 py-12">
+    <div class="container mx-auto text-center">
+      <h2 class="text-3xl font-bold mb-4">Sobre Nosotros</h2>
+      <p class="text-lg max-w-2xl mx-auto">En CactusWorld, nos apasiona traer la belleza del desierto a tu espacio. Ofrecemos cactus de alta calidad, cultivados de manera sostenible. Ideal para decorar y purificar el aire.</p>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="container mx-auto py-12">
+    <h2 class="text-3xl font-bold text-center mb-8">Contáctanos</h2>
+    <form class="max-w-md mx-auto bg-white p-6 rounded shadow">
+      <input type="text" placeholder="Nombre" class="w-full mb-4 p-2 border rounded" />
+      <input type="email" placeholder="Email" class="w-full mb-4 p-2 border rounded" />
+      <textarea placeholder="Mensaje" class="w-full mb-4 p-2 border rounded h-32"></textarea>
+      <button type="submit" class="bg-secondary text-white py-2 px-4 rounded w-full hover:bg-red-700">Enviar</button>
+    </form>
+  </section>
+</Layout>
