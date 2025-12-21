@@ -3,28 +3,33 @@ import { useStore } from '@nanostores/react';
 import { isCartOpen, cartItems, addToCart, removeFromCart } from '../store/cartStore';
 import { db } from '../lib/firebase';
 import { doc, runTransaction, setDoc, updateDoc, increment } from 'firebase/firestore';
-import { X, Trash2, ShoppingBag, CheckCircle, MapPin, Phone, User, CreditCard } from 'lucide-react';
 
-const APP_ID = 'pos-pro-mobile-v2'; // Tu ID exacto del POS
+const APP_ID = 'pos-pro-mobile-v2';
+
+// Iconos sencillos (SVG) para no depender de librerías externas
+const IconClose = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
+const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+const IconBag = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>;
 
 export default function CartSidebar() {
   const isOpen = useStore(isCartOpen);
   const items = useStore(cartItems);
   const cart = Object.values(items);
-  const [step, setStep] = useState('cart'); // cart | form | success
+  
+  // Estados simples: 'cart' (lista) -> 'form' (datos) -> 'success' (fin)
+  const [step, setStep] = useState('cart'); 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', address: '' });
 
-  // Totales
-  const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const total = subtotal; // Puedes agregar envío dinámico aquí si lo deseas
+  const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
+  // --- LÓGICA DE NEGOCIO (Idéntica a tu ModalCobro) ---
   const handleCheckout = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // 1. Generar ID de Orden (Lógica idéntica a tu ModalCobro.js)
+      // 1. Generar ID de Orden (Secuencial por día)
       const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
       const counterRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'counters', 'orders_'+dateStr);
       
@@ -37,254 +42,164 @@ export default function CartSidebar() {
 
       const oid = `HM-${dateStr}-${String(seq).padStart(3,'0')}`;
 
-      // 2. Crear Objeto de Orden compatible con tu POS
+      // 2. Crear la Orden (Formato compatible con tu POS)
       const orderData = {
         displayId: oid,
         createdAt: new Date().toISOString(),
-        cart: cart.map(i => ({...i, qty: i.quantity})), // Adaptamos quantity a qty como lo usa tu POS
+        cart: cart.map(i => ({...i, qty: i.quantity})), // Mapeo para compatibilidad
         client: formData.name,
         phone: formData.phone,
         address: formData.address,
-        method: 'Pedido Web', // Método fijo para identificar origen
-        status: 'recibido',   // Estado inicial para tu tablero Kanban/Lista
+        method: 'Pedido Web',
+        status: 'recibido',
         paymentStatus: 'pendiente',
         total: total,
-        boxId: 'WEB',         // Caja virtual
+        boxId: 'WEB',
         isDelivery: true
       };
 
-      // 3. Guardar Orden en Firestore
       await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'orders', oid), orderData);
 
-      // 4. Descontar Stock (Manejo de Variantes y Productos Simples)
+      // 3. Descontar Inventario
       for(let item of cart) {
         const prodRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'products', item.id);
         
         if(!item.isVariant) {
-            // Producto simple
             await updateDoc(prodRef, { stock: increment(-item.quantity) });
         } else {
-            // Producto con variantes: Transacción necesaria para leer array, modificarlo y guardar
             await runTransaction(db, async (t)=>{ 
                 const d = await t.get(prodRef);
                 if(!d.exists()) return;
-                
-                const currentData = d.data();
-                const vars = currentData.variants || [];
-                
-                const newVars = vars.map(v => 
+                const currentVars = d.data().variants || [];
+                const newVars = currentVars.map(v => 
                     v.name === item.variantName 
                     ? {...v, stock: Math.max(0, Number(v.stock) - item.quantity)} 
                     : v
                 );
-                
                 t.update(prodRef, { variants: newVars });
             });
         }
       }
 
       setStep('success');
-      // No borramos el carrito inmediatamente por si el usuario quiere ver qué pidió,
-      // pero idealmente deberías limpiar: cartItems.set({});
     } catch (err) {
       console.error(err);
-      alert("Error al procesar el pedido. Por favor intenta de nuevo.");
+      alert("Error al procesar: " + err.message);
     }
     setLoading(false);
-  };
-
-  const closeSidebar = () => {
-      isCartOpen.set(false);
-      if(step === 'success') {
-          setStep('cart');
-          cartItems.set({}); // Limpiar carrito al cerrar si fue exitoso
-          window.location.reload(); // Recargar para actualizar stock visualmente
-      }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end font-sans">
-      {/* Overlay Oscuro */}
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={closeSidebar} />
+    <div className="fixed inset-0 z-50 flex justify-end">
+      {/* Fondo oscuro al hacer clic cierra */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => isCartOpen.set(false)} />
 
-      {/* Panel Lateral */}
-      <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      {/* Panel Blanco */}
+      <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col">
         
-        {/* HEADER */}
-        <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-white shadow-sm z-10">
-          <h2 className="font-bold text-xl text-slate-800 flex items-center gap-2">
-            <ShoppingBag className="text-blue-600" size={24} />
-            {step === 'cart' ? 'Mi Carrito' : step === 'form' ? 'Checkout' : 'Confirmación'}
+        {/* Encabezado */}
+        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+          <h2 className="font-bold text-lg flex items-center gap-2">
+            <IconBag /> 
+            {step === 'cart' ? 'Carrito de Compras' : step === 'form' ? 'Datos de Envío' : '¡Pedido Listo!'}
           </h2>
-          <button onClick={closeSidebar} className="p-2 hover:bg-gray-100 rounded-full text-slate-500 transition">
-            <X size={24} />
+          <button onClick={() => isCartOpen.set(false)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500">
+            <IconClose />
           </button>
         </div>
 
-        {/* BODY */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
-            {/* VISTA 1: LISTA DE PRODUCTOS */}
+        {/* CONTENIDO SCROLLABLE */}
+        <div className="flex-1 overflow-y-auto p-4">
+            
+            {/* VISTA 1: LISTA */}
             {step === 'cart' && (
-              <div className="p-4 space-y-3">
+              <>
                 {cart.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full pt-20 opacity-50">
-                    <ShoppingBag size={64} className="mb-4 text-slate-300"/>
-                    <p className="text-lg font-medium text-slate-400">Tu carrito está vacío</p>
-                    <button onClick={closeSidebar} className="mt-4 text-blue-600 hover:underline">Seguir comprando</button>
-                  </div>
+                  <p className="text-center text-gray-400 mt-10">Tu carrito está vacío.</p>
                 ) : (
-                  cart.map(item => (
-                    <div key={item.cartId} className="flex gap-4 bg-white p-3 rounded-lg border border-gray-200 shadow-sm relative group">
-                      <div className="w-20 h-20 bg-gray-100 rounded-md overflow-hidden shrink-0">
-                         <img src={item.image} className="w-full h-full object-cover mix-blend-multiply" alt={item.name} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-sm text-slate-800 truncate pr-6">{item.name}</h4>
-                        {item.isVariant && (
-                            <span className="inline-block text-[10px] uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded mt-1">
-                                {item.variantName}
-                            </span>
-                        )}
-                        <div className="mt-2 flex justify-between items-end">
-                            <p className="text-blue-700 font-bold text-lg">${item.price}</p>
-                            
-                            <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1 border border-gray-200">
-                                <button 
-                                    onClick={() => removeFromCart(item.cartId)} 
-                                    className="w-6 h-6 flex items-center justify-center rounded bg-white shadow-sm text-slate-600 hover:text-red-500 font-bold text-sm"
-                                >-</button>
-                                <span className="font-semibold text-sm w-4 text-center">{item.quantity}</span>
-                                <button 
-                                    onClick={() => addToCart(item, item.isVariant ? {name: item.variantName, stock: 999} : {stock: 999})} 
-                                    className="w-6 h-6 flex items-center justify-center rounded bg-white shadow-sm text-slate-600 hover:text-blue-600 font-bold text-sm"
-                                >+</button>
-                            </div>
+                  <div className="space-y-4">
+                    {cart.map(item => (
+                      <div key={item.cartId} className="flex gap-3 border p-2 rounded-lg relative">
+                        <img src={item.image} className="w-16 h-16 object-cover rounded bg-gray-100" />
+                        <div className="flex-1">
+                          <h4 className="font-bold text-sm text-gray-800">{item.name}</h4>
+                          {item.isVariant && <span className="text-xs bg-gray-100 px-2 rounded">{item.variantName}</span>}
+                          <div className="flex justify-between items-center mt-2">
+                             <p className="text-blue-700 font-bold">${item.price}</p>
+                             <div className="flex items-center gap-2 bg-gray-100 rounded px-2">
+                                <button onClick={() => removeFromCart(item.cartId)} className="font-bold px-1 text-gray-600">-</button>
+                                <span className="text-sm font-bold">{item.quantity}</span>
+                                <button onClick={() => addToCart(item, item.isVariant ? {name: item.variantName, stock: 999} : {stock: 999})} className="font-bold px-1 text-gray-600">+</button>
+                             </div>
+                          </div>
                         </div>
+                        <button onClick={() => removeFromCart(item.cartId)} className="absolute top-2 right-2 text-gray-300 hover:text-red-500">
+                           <IconTrash />
+                        </button>
                       </div>
-                      {/* Botón eliminar directo */}
-                      <button 
-                        onClick={() => removeFromCart(item.cartId)} 
-                        className="absolute top-2 right-2 text-gray-300 hover:text-red-500 transition p-1"
-                      >
-                         <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
-              </div>
+              </>
             )}
 
             {/* VISTA 2: FORMULARIO */}
             {step === 'form' && (
-              <form id="checkout-form" onSubmit={handleCheckout} className="p-6 space-y-5">
-                <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg mb-6">
-                    <h3 className="text-blue-800 font-bold text-sm mb-1 flex items-center gap-2">
-                        <CreditCard size={16}/> Resumen de Pago
-                    </h3>
-                    <div className="flex justify-between text-sm text-blue-900/70">
-                        <span>Total a pagar:</span>
-                        <span className="font-bold text-lg">${total.toFixed(2)}</span>
-                    </div>
+              <form id="checkout-form" onSubmit={handleCheckout} className="space-y-4">
+                <div className="bg-blue-50 p-3 rounded text-blue-900 text-sm mb-4">
+                    Total a pagar: <strong>${total.toFixed(2)}</strong>
                 </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Nombre Completo</label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-3 text-slate-400" size={18} />
-                            <input 
-                              required 
-                              placeholder="Ej: Juan Pérez" 
-                              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                              onChange={e => setFormData({...formData, name: e.target.value})}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Teléfono / WhatsApp</label>
-                        <div className="relative">
-                            <Phone className="absolute left-3 top-3 text-slate-400" size={18} />
-                            <input 
-                              required 
-                              placeholder="Ej: 8888-8888" 
-                              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                              onChange={e => setFormData({...formData, phone: e.target.value})}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Dirección de Entrega</label>
-                        <div className="relative">
-                            <MapPin className="absolute left-3 top-3 text-slate-400" size={18} />
-                            <textarea 
-                              required 
-                              placeholder="Barrio, calle, número de casa..." 
-                              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none h-24 resize-none transition"
-                              onChange={e => setFormData({...formData, address: e.target.value})}
-                            />
-                        </div>
-                    </div>
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase">Nombre</label>
+                    <input required className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 outline-none" 
+                           onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Tu nombre" />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase">Teléfono</label>
+                    <input required className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 outline-none" 
+                           onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="WhatsApp o celular" />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase">Dirección</label>
+                    <textarea required className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 outline-none h-24" 
+                              onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Dirección exacta de entrega" />
                 </div>
               </form>
             )}
 
             {/* VISTA 3: ÉXITO */}
             {step === 'success' && (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-in zoom-in-95">
-                <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
-                    <CheckCircle className="text-green-600 w-12 h-12" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">¡Pedido Recibido!</h2>
-                <p className="text-slate-500 mb-8 max-w-xs mx-auto">
-                    Hemos registrado tu pedido exitosamente. Nos pondremos en contacto contigo pronto.
-                </p>
-                <div className="bg-gray-100 p-4 rounded-lg w-full mb-8">
-                    <p className="text-xs text-slate-400 uppercase font-bold">Total del pedido</p>
-                    <p className="text-xl font-bold text-slate-800">${total.toFixed(2)}</p>
+              <div className="text-center py-10">
+                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-3xl mb-4">✓</div>
+                <h3 className="text-xl font-bold text-gray-800">¡Pedido Recibido!</h3>
+                <p className="text-gray-500 mt-2">Pronto nos pondremos en contacto contigo.</p>
+                <div className="mt-8 p-4 bg-gray-50 rounded">
+                    <p className="font-bold">Total: ${total.toFixed(2)}</p>
                 </div>
               </div>
             )}
         </div>
 
-        {/* FOOTER (Totales y Botones) */}
+        {/* PIE DE PÁGINA (BOTONES) */}
         {step !== 'success' && (
-            <div className="p-5 border-t border-gray-200 bg-white">
-                {step === 'cart' && (
-                    <>
-                        <div className="flex justify-between items-center mb-4">
-                            <span className="text-slate-500">Subtotal</span>
-                            <span className="text-2xl font-bold text-slate-800">${total.toFixed(2)}</span>
-                        </div>
-                        <button 
-                            onClick={() => cart.length > 0 && setStep('form')} 
-                            disabled={cart.length === 0}
-                            className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 disabled:opacity-50 disabled:shadow-none flex justify-center items-center gap-2"
-                        >
-                            Finalizar Compra <CheckCircle size={18} />
-                        </button>
-                    </>
-                )}
-
-                {step === 'form' && (
-                    <div className="flex gap-3">
-                        <button 
-                            type="button" 
-                            onClick={() => setStep('cart')} 
-                            className="w-1/3 bg-gray-100 text-slate-600 py-3 rounded-lg font-bold hover:bg-gray-200 transition"
-                        >
+            <div className="p-4 border-t bg-gray-50">
+                {step === 'cart' ? (
+                    <button 
+                        onClick={() => cart.length > 0 && setStep('form')}
+                        disabled={cart.length === 0} 
+                        className="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700 disabled:opacity-50"
+                    >
+                        Pagar ${total.toFixed(2)}
+                    </button>
+                ) : (
+                    <div className="flex gap-2">
+                        <button onClick={() => setStep('cart')} type="button" className="w-1/3 bg-gray-200 text-gray-700 py-3 rounded font-bold">
                             Volver
                         </button>
-                        <button 
-                            form="checkout-form"
-                            type="submit" 
-                            disabled={loading} 
-                            className="w-2/3 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 disabled:opacity-70 flex justify-center items-center gap-2"
-                        >
-                            {loading ? 'Procesando...' : 'Confirmar Pedido'}
+                        <button form="checkout-form" type="submit" disabled={loading} className="w-2/3 bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700 disabled:opacity-70">
+                            {loading ? '...' : 'Confirmar Pedido'}
                         </button>
                     </div>
                 )}
@@ -292,12 +207,13 @@ export default function CartSidebar() {
         )}
         
         {step === 'success' && (
-             <div className="p-5 border-t border-gray-200 bg-white">
-                <button onClick={closeSidebar} className="w-full bg-slate-900 text-white py-4 rounded-lg font-bold hover:bg-slate-800 transition">
-                    Cerrar y Volver a la Tienda
+            <div className="p-4 border-t">
+                <button onClick={() => { isCartOpen.set(false); setStep('cart'); cartItems.set({}); window.location.reload(); }} className="w-full bg-gray-900 text-white py-3 rounded font-bold">
+                    Cerrar
                 </button>
-             </div>
+            </div>
         )}
+
       </div>
     </div>
   );
