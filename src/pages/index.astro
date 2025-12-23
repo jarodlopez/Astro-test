@@ -4,107 +4,101 @@ import CartSidebar from '../components/CartSidebar.jsx';
 import ProductGrid from '../components/ProductGrid.jsx';
 ---
 
-<Layout title="HomeMart | Tu tienda en línea">
+<Layout title="HomeMart | Modern Living">
 
-  <!-- SIDEBAR CARRITO -->
   <CartSidebar client:load />
 
-  <!-- HERO -->
-  <section class="bg-slate-900 text-white">
-    <div class="container mx-auto px-4 py-12 md:py-20 flex flex-col md:flex-row items-center">
-      <div class="md:w-1/2 space-y-6">
-        <span class="bg-yellow-500 text-blue-900 font-bold px-3 py-1 text-xs rounded uppercase tracking-wider">
-          Ofertas de Temporada
-        </span>
+  <!-- HERO SECTION: Diseño asimétrico moderno -->
+  <section class="relative overflow-hidden bg-zinc-50 pt-10 pb-20 lg:pt-20">
+    <div class="container mx-auto px-6 relative z-10">
+      <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+        
+        <div class="lg:w-1/2 space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-700">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wide">
+            <span class="w-2 h-2 rounded-full bg-indigo-600"></span> Nueva Colección 2025
+          </div>
 
-        <h1 class="text-4xl md:text-6xl font-extrabold leading-tight">
-          Tecnología para <br />
-          <span class="text-blue-400">tu vida diaria</span>
-        </h1>
+          <h1 class="text-5xl lg:text-7xl font-display font-bold text-zinc-900 leading-[1.1]">
+            Eleva tu <br/>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-500">
+              Espacio Vital
+            </span>
+          </h1>
 
-        <p class="text-slate-300 text-lg max-w-md">
-          Equipa tu hogar con lo último en electrónica, muebles y accesorios con envío rápido.
-        </p>
+          <p class="text-lg text-zinc-500 max-w-lg leading-relaxed">
+            Descubre tecnología y diseño que transforman tu hogar. Envío gratuito en pedidos superiores a $50.
+          </p>
 
-        <div class="flex gap-4">
-          <a
-            href="#catalogo"
-            class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-sm font-bold transition"
-          >
-            Ver Catálogo
-          </a>
+          <div class="flex flex-col sm:flex-row gap-4 pt-4">
+            <a href="#catalogo" class="px-8 py-4 bg-zinc-900 text-white font-medium rounded-full hover:bg-zinc-800 hover:scale-105 transition-all shadow-xl shadow-zinc-900/20 text-center">
+              Explorar Catálogo
+            </a>
+            <a href="#" class="px-8 py-4 bg-white text-zinc-700 border border-zinc-200 font-medium rounded-full hover:bg-zinc-50 hover:border-zinc-300 transition-all text-center">
+              Ver Ofertas
+            </a>
+          </div>
         </div>
-      </div>
 
-      <div class="md:w-1/2 mt-10 md:mt-0 flex justify-center">
-        <img
-          src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
-          alt="Electrónica"
-          class="rounded shadow-2xl border-4 border-slate-800 rotate-2 hover:rotate-0 transition duration-500"
-        />
+        <div class="lg:w-1/2 relative animate-in fade-in zoom-in duration-1000 delay-200">
+          {/* Fondo abstracto decorativo */}
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-indigo-200/50 to-purple-200/50 rounded-full blur-3xl -z-10"></div>
+          
+          <img
+            src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+            alt="Setup Moderno"
+            class="rounded-3xl shadow-2xl shadow-indigo-500/10 rotate-1 hover:rotate-0 transition-transform duration-700 object-cover aspect-[4/3] w-full"
+          />
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- CATALOGO -->
-  <section id="catalogo" class="bg-gray-50 py-16">
-    <div class="container mx-auto px-4">
-      <div class="flex justify-between items-end mb-8 border-b border-gray-200 pb-4">
+  <!-- SECCIÓN BENEFICIOS (Clean Grid) -->
+  <section class="bg-white py-12 border-b border-zinc-100">
+    <div class="container mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {[
+          { icon: "🚀", title: "Envío Express", desc: "En la puerta de tu casa en 24h" },
+          { icon: "🛡️", title: "Garantía Extendida", desc: "Protección total por 2 años" },
+          { icon: "💳", title: "Pagos Flexibles", desc: "Cuotas sin interés disponibles" }
+        ].map((item) => (
+          <div class="flex items-center gap-4 p-4 rounded-2xl hover:bg-zinc-50 transition-colors cursor-default">
+            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-2xl">
+              {item.icon}
+            </div>
+            <div>
+              <h3 class="font-bold text-zinc-900">{item.title}</h3>
+              <p class="text-sm text-zinc-500">{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CATÁLOGO -->
+  <section id="catalogo" class="py-24 bg-white">
+    <div class="container mx-auto px-6">
+      <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
         <div>
-          <h2 class="text-2xl font-bold text-slate-900">
-            Productos Destacados
+          <h2 class="text-3xl md:text-4xl font-display font-bold text-zinc-900 mb-2">
+            Tendencias
           </h2>
-          <p class="text-slate-500 text-sm">
-            Explora nuestra selección completa
+          <p class="text-zinc-500">
+            Nuestra selección curada para esta temporada.
           </p>
         </div>
 
-        <div class="hidden md:flex gap-4 text-sm font-medium text-slate-600">
-          <button class="text-blue-700 border-b-2 border-blue-700 pb-4 -mb-4">
-            Todos
-          </button>
-          <button class="hover:text-blue-700 transition">Hogar</button>
-          <button class="hover:text-blue-700 transition">Tecnología</button>
+        {/* Filtros Modernos (Pill shape) */}
+        <div class="flex flex-wrap gap-2">
+          <button class="px-4 py-2 bg-zinc-900 text-white rounded-full text-sm font-medium transition-transform active:scale-95">Todos</button>
+          <button class="px-4 py-2 bg-zinc-100 text-zinc-600 hover:bg-zinc-200 rounded-full text-sm font-medium transition-colors">Tecnología</button>
+          <button class="px-4 py-2 bg-zinc-100 text-zinc-600 hover:bg-zinc-200 rounded-full text-sm font-medium transition-colors">Hogar</button>
         </div>
       </div>
 
-      <!-- 🔥 GRID CLIENTE (FIRESTORE VIVE AQUÍ) -->
-      <ProductGrid client:load />
-    </div>
-  </section>
-
-  <!-- BENEFICIOS -->
-  <section class="bg-white py-12 border-t border-gray-200">
-    <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-      <div class="p-4">
-        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-          🚛
-        </div>
-        <h3 class="font-bold text-slate-900">Envío Rápido</h3>
-        <p class="text-sm text-slate-500">
-          Recibe tus productos en 24–48 horas.
-        </p>
-      </div>
-
-      <div class="p-4">
-        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-          💳
-        </div>
-        <h3 class="font-bold text-slate-900">Pago Seguro</h3>
-        <p class="text-sm text-slate-500">
-          Aceptamos tarjetas y efectivo.
-        </p>
-      </div>
-
-      <div class="p-4">
-        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-          🛡️
-        </div>
-        <h3 class="font-bold text-slate-900">Garantía Total</h3>
-        <p class="text-sm text-slate-500">
-          30 días para cambios o devoluciones.
-        </p>
-      </div>
+      <!-- GRID -->
+      <ProductGrid client:visible />
     </div>
   </section>
 
